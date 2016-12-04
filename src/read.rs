@@ -20,6 +20,7 @@ pub struct Streamer {
     bytes: io::Bytes<GzDecoder<io::BufReader<fs::File>>>,
 }
 
+// TODO: Is the fact that we are copying into "buffer" costing us a lot?
 impl Streamer {
     pub fn new(input_file: &str) -> Result<Streamer, WikiError> {
         let f = fs::File::open(input_file)?;
