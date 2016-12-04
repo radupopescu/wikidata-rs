@@ -7,8 +7,8 @@ use errors::*;
 
 pub type WikiTitles = HashMap<String, String>;
 
-pub fn parse_item(line: &str, languages: &Vec<&str>) -> Result<Option<WikiTitles>,
-                                                           WikiError> {
+pub fn parse_item(line: &str, languages: &Vec<String>) -> Result<Option<WikiTitles>,
+                                                                 WikiError> {
     let item: SDValue = from_str(line)?;
 
     let mut sites = WikiTitles::new();
@@ -18,7 +18,7 @@ pub fn parse_item(line: &str, languages: &Vec<&str>) -> Result<Option<WikiTitles
             match sitelinks.find(&link) {
                 Some(res) => {
                     if let Some(title) = res.find("title") {
-                        sites.insert(l.to_string(), title.to_string());
+                        sites.insert(l.to_owned(), title.to_string());
                     }
                 },
                 None => (),
