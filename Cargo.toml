@@ -7,3 +7,4 @@ authors = ["Radu Popescu <mail@radupopescu.net>"]
 clap = "~2.19.0"
 serde = "0.8"
 serde_json = "0.8"
+flate2 = "0.2.14"

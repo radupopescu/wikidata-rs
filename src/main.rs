@@ -4,6 +4,8 @@ use wikidata::errors::*;
 #[macro_use]
 extern crate clap;
 
+extern crate flate2;
+
 use std::collections::HashMap;
 
 extern crate serde;
@@ -11,7 +13,9 @@ extern crate serde_json;
 
 use std::fs;
 use std::io;
-use std::io::BufRead;
+use std::io::Read;
+
+use std::str;
 
 struct WikiElement {
     id: String,
@@ -56,9 +60,11 @@ fn parse_item(line: &str, languages: &Vec<&str>) -> Result<Option<WikiElement>,
     Ok(wiki_elem)
 }
 
-fn read_file(input_file: &str) -> Result<io::BufReader<fs::File>, WikiError> {
+fn read_file(input_file: &str) -> Result<flate2::bufread::GzDecoder<io::BufReader<fs::File>>, WikiError> {
     let f = fs::File::open(input_file)?;
-    Ok(io::BufReader::new(f))
+    let bf = io::BufReader::new(f);
+    let rdr = flate2::bufread::GzDecoder::new(bf)?;
+    Ok(rdr)
 }
 
 fn main() {
@@ -82,21 +88,29 @@ fn main() {
 
     let mut elements = Vec::new();
     if let Ok(reader) = read_file(input_file) {
-        for l in reader.lines() {
-            if let Ok(line) = l {
-                let end = if line.ends_with(",") {
-                    line.len() - 1
-                } else {
-                    line.len()
-                };
-                match parse_item(&line[0..end], &languages) {
-                    Ok(elem) => {
-                        if let Some(el) = elem {
-                            elements.push(el);
+        let mut buf = String::new();
+        for b in reader.bytes() {
+            if let Ok(bite) = b {
+                if bite == 0xA {
+                    let end = if buf.ends_with(",") {
+                        buf.len() - 1
+                    } else {
+                        buf.len()
+                    };
+                    match parse_item(&buf[0..end], &languages) {
+                        Ok(elem) => {
+                            if let Some(el) = elem {
+                                elements.push(el);
+                            }
+                        },
+                        Err(err) => {
+                            println!("Error parsing line: {}", err);
                         }
-                    },
-                    Err(err) => {
-                        println!("Error parsing line: {}", err);
+                    }
+                    buf.clear();
+                } else{
+                    if let Ok(bb) = std::str::from_utf8(&[bite]) {
+                        buf.push_str(bb);
                     }
                 }
             }
