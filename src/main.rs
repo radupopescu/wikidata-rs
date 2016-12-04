@@ -4,19 +4,61 @@ use wikidata::errors::*;
 #[macro_use]
 extern crate clap;
 
-use std::option::Option;
-use std::collections::HashSet;
+use std::collections::HashMap;
 
-struct WikiElement<'a> {
-    id: &'a str,
-    sites: HashSet<&'a str>,
+extern crate serde;
+extern crate serde_json;
+
+use std::fs;
+use std::io;
+use std::io::BufRead;
+
+struct WikiElement {
+    id: String,
+    sites: HashMap<String, String>,
 }
 
-fn parse_item<'a>(line: &str, languages: &Vec<&str>) -> Result<WikiElement<'a>,
-                                                               WikiError> {
-    let mut s = HashSet::new();
-    s.insert("test");
-    Ok(WikiElement {id : "test", sites : s} )
+fn parse_item(line: &str, languages: &Vec<&str>) -> Result<Option<WikiElement>,
+                                                           WikiError> {
+    let item: serde_json::value::Value = serde_json::from_str(line)?;
+
+    let mut sites = HashMap::new();
+
+    let wiki_elem = if let Some(elem) = item.find("id") {
+        if let Some(i) = elem.as_str() {
+            let id = i.to_string();
+            if let Some(sitelinks) = item.find("sitelinks") {
+                for l in languages {
+                    let link = format!("{}wiki", l);
+                    match sitelinks.find(&link) {
+                        Some(res) => {
+                            if let Some(title) = res.find("title") {
+                                sites.insert(l.to_string(), title.to_string());
+                            }
+                        },
+                        None => (),
+                    }
+                }
+                if sites.len() == languages.len() {
+                    Some(WikiElement{id : id, sites : sites})
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    Ok(wiki_elem)
+}
+
+fn read_file(input_file: &str) -> Result<io::BufReader<fs::File>, WikiError> {
+    let f = fs::File::open(input_file)?;
+    Ok(io::BufReader::new(f))
 }
 
 fn main() {
@@ -37,6 +79,39 @@ fn main() {
         .collect::<Vec<_>>(); // safe <= required parameters
 
     println!("Languages: {:?}", languages);
+
+    let mut elements = Vec::new();
+    if let Ok(reader) = read_file(input_file) {
+        for l in reader.lines() {
+            if let Ok(line) = l {
+                let end = if line.ends_with(",") {
+                    line.len() - 1
+                } else {
+                    line.len()
+                };
+                match parse_item(&line[0..end], &languages) {
+                    Ok(elem) => {
+                        if let Some(el) = elem {
+                            elements.push(el);
+                        }
+                    },
+                    Err(err) => {
+                        println!("Error parsing line: {}", err);
+                    }
+                }
+            }
+        }
+    }
+    let mut same = 0;
+    let mut different = 0;
+    for e in elements {
+        println!("id: {}, sites: {:?}", e.id, e.sites);
+        if e.sites[languages[0]] == e.sites[languages[1]] {
+            same += 1
+        } else {
+            different += 1
+        }
+    }
+
+    println!("Results - Same: {}, Different: {}", same, different);
 }
-
-

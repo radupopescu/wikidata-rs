@@ -5,3 +5,5 @@ authors = ["Radu Popescu <mail@radupopescu.net>"]
 
 [dependencies]
 clap = "~2.19.0"
+serde = "0.8"
+serde_json = "0.8"
