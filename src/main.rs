@@ -1,13 +1,17 @@
 extern crate wikidata;
 use wikidata::parse::parse_item;
-use wikidata::read::read_file;
+use wikidata::read::Streamer;
 use wikidata::param::{Parameters,read_params};
-
-use std::io::Read;
 
 extern crate time;
 
 fn main() {
+    // TODO: More fine grained time measurements on:
+    //       - file streaming
+    //       - JSON parsing
+    //       - element production loop
+    //       - element counting
+
     let t0 = time::precise_time_ns();
 
     let Parameters{input_file, languages} = read_params();
@@ -15,34 +19,21 @@ fn main() {
     println!("Languages: {:?}", languages);
 
     let mut elements = Vec::new();
-    if let Ok(reader) = read_file(&input_file) {
-        let mut buf = String::new();
-        for b in reader.bytes() {
-            if let Ok(bite) = b {
-                if bite == 0xA {
-                    let end = if buf.ends_with(",") {
-                        buf.len() - 1
-                    } else {
-                        buf.len()
-                    };
-                    match parse_item(&buf[0..end], &languages) {
-                        Ok(elem) => {
-                            if let Some(el) = elem {
-                                elements.push(el);
-                            }
-                        },
-                        Err(_) => {
-                        }
+    if let Ok(streamer) = Streamer::new(&input_file) {
+        for line in streamer {
+            match parse_item(&line, &languages) {
+                Ok(elem) => {
+                    if let Some(el) = elem {
+                        elements.push(el);
                     }
-                    buf.clear();
-                } else{
-                    if let Ok(bb) = std::str::from_utf8(&[bite]) {
-                        buf.push_str(bb);
-                    }
+                },
+                Err(_) => {
                 }
             }
         }
     }
+
+    // TODO: Must do counting concurrently with producing elements
     let mut same = 0;
     let mut different = 0;
     for e in elements {

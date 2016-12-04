@@ -9,7 +9,12 @@ pub type WikiTitles = HashMap<String, String>;
 
 pub fn parse_item(line: &str, languages: &Vec<String>) -> Result<Option<WikiTitles>,
                                                                  WikiError> {
-    let item: SDValue = from_str(line)?;
+    let end = if line.ends_with(",") {
+        line.len() - 1
+    } else {
+        line.len()
+    };
+    let item: SDValue = from_str(&line[0..end])?;
 
     let mut sites = WikiTitles::new();
     if let Some(sitelinks) = item.find("sitelinks") {
