@@ -1,73 +1,13 @@
 extern crate wikidata;
-use wikidata::errors::*;
+use wikidata::parse::parse_item;
+use wikidata::read::read_file;
 
 #[macro_use]
 extern crate clap;
 
-extern crate flate2;
-
-use std::collections::HashMap;
-
-extern crate serde;
-extern crate serde_json;
-
-use std::fs;
-use std::io;
 use std::io::Read;
 
-use std::str;
-
 extern crate time;
-
-struct WikiElement {
-    id: String,
-    sites: HashMap<String, String>,
-}
-
-fn parse_item(line: &str, languages: &Vec<&str>) -> Result<Option<WikiElement>,
-                                                           WikiError> {
-    let item: serde_json::value::Value = serde_json::from_str(line)?;
-
-    let mut sites = HashMap::new();
-
-    let wiki_elem = if let Some(elem) = item.find("id") {
-        if let Some(i) = elem.as_str() {
-            let id = i.to_string();
-            if let Some(sitelinks) = item.find("sitelinks") {
-                for l in languages {
-                    let link = format!("{}wiki", l);
-                    match sitelinks.find(&link) {
-                        Some(res) => {
-                            if let Some(title) = res.find("title") {
-                                sites.insert(l.to_string(), title.to_string());
-                            }
-                        },
-                        None => (),
-                    }
-                }
-                if sites.len() == languages.len() {
-                    Some(WikiElement{id : id, sites : sites})
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-    Ok(wiki_elem)
-}
-
-fn read_file(input_file: &str) -> Result<flate2::bufread::GzDecoder<io::BufReader<fs::File>>, WikiError> {
-    let f = fs::File::open(input_file)?;
-    let bf = io::BufReader::new(f);
-    let rdr = flate2::bufread::GzDecoder::new(bf)?;
-    Ok(rdr)
-}
 
 fn main() {
     let t0 = time::precise_time_ns();
@@ -121,7 +61,7 @@ fn main() {
     let mut same = 0;
     let mut different = 0;
     for e in elements {
-        if e.sites[languages[0]] == e.sites[languages[1]] {
+        if e[languages[0]] == e[languages[1]] {
             same += 1
         } else {
             different += 1
@@ -130,5 +70,5 @@ fn main() {
 
     let t1 = time::precise_time_ns();
     println!("Results - Same: {}, Different: {}", same, different);
-    println!("Time: {} ms", (t1 - t0) / 1000000 );
+    println!("Time: {} ms", (t1 - t0) / 1000000 )
 }
