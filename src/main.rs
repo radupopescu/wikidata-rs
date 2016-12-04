@@ -17,6 +17,8 @@ use std::io::Read;
 
 use std::str;
 
+extern crate time;
+
 struct WikiElement {
     id: String,
     sites: HashMap<String, String>,
@@ -68,6 +70,7 @@ fn read_file(input_file: &str) -> Result<flate2::bufread::GzDecoder<io::BufReade
 }
 
 fn main() {
+    let t0 = time::precise_time_ns();
     let matches = clap_app!(myapp =>
         (version: "0.1.0")
         (author: "Radu Popescu <mail@radupopescu.net>")
@@ -103,8 +106,7 @@ fn main() {
                                 elements.push(el);
                             }
                         },
-                        Err(err) => {
-                            println!("Error parsing line: {}", err);
+                        Err(_) => {
                         }
                     }
                     buf.clear();
@@ -119,7 +121,6 @@ fn main() {
     let mut same = 0;
     let mut different = 0;
     for e in elements {
-        println!("id: {}, sites: {:?}", e.id, e.sites);
         if e.sites[languages[0]] == e.sites[languages[1]] {
             same += 1
         } else {
@@ -127,5 +128,7 @@ fn main() {
         }
     }
 
+    let t1 = time::precise_time_ns();
     println!("Results - Same: {}, Different: {}", same, different);
+    println!("Time: {} ms", (t1 - t0) / 1000000 );
 }
