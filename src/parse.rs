@@ -1,6 +1,6 @@
+use time::precise_time_ns;
 use serde_json::from_str;
 use serde_json::value::Value as SDValue;
-
 use std::collections::HashMap;
 
 use errors::*;
@@ -9,6 +9,7 @@ pub type WikiTitles = HashMap<String, String>;
 
 pub fn parse_item(line: &str, languages: &Vec<String>) -> Result<Option<WikiTitles>,
                                                                  WikiError> {
+    let t0 = precise_time_ns();
     let end = if line.ends_with(",") {
         line.len() - 1
     } else {
@@ -35,6 +36,8 @@ pub fn parse_item(line: &str, languages: &Vec<String>) -> Result<Option<WikiTitl
     } else {
         None
     };
+    let t1 = precise_time_ns();
+    println!("parse_item: {} us", (t1 - t0) / 1000 );
     Ok(result)
 }
 

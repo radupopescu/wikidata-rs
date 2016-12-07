@@ -1,11 +1,12 @@
 use flate2::bufread::GzDecoder;
-
-use errors::*;
+use time::precise_time_ns;
 
 use std::fs;
 use std::io;
 use std::io::Read;
 use std::str;
+
+use errors::*;
 
 pub fn make_reader(input_file: &str) -> Result<GzDecoder<io::BufReader<fs::File>>,
                                                WikiError> {
@@ -50,12 +51,16 @@ impl Streamer {
 impl Iterator for Streamer {
     type Item = String;
     fn next(&mut self) -> Option<String> {
+        let t0 = precise_time_ns();
         self.buffer.clear();
         self.advance_to_eol();
-        if self.buffer.len() > 0 {
+        let ret = if self.buffer.len() > 0 {
             Some(self.buffer.to_owned())
         } else {
             None
-        }
+        };
+        let t1 = precise_time_ns();
+        println!("Streamer::next: {} us", (t1 - t0) / 1000 );
+        ret
     }
 }

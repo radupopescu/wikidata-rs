@@ -1,9 +1,11 @@
 extern crate wikidata;
+extern crate time;
+
+use time::precise_time_ns;
+
 use wikidata::parse::parse_item;
 use wikidata::read::Streamer;
 use wikidata::param::{Parameters,read_params};
-
-extern crate time;
 
 fn main() {
     // TODO: More fine grained time measurements on:
@@ -12,7 +14,7 @@ fn main() {
     //       - element production loop
     //       - element counting
 
-    let t0 = time::precise_time_ns();
+    let t0 = precise_time_ns();
 
     let Parameters{input_file, languages} = read_params();
     println!("Input file: {}", input_file);
@@ -20,6 +22,7 @@ fn main() {
 
     let mut elements = Vec::new();
     if let Ok(streamer) = Streamer::new(&input_file) {
+        let t00 = precise_time_ns();
         for line in streamer {
             match parse_item(&line, &languages) {
                 Ok(elem) => {
@@ -31,9 +34,12 @@ fn main() {
                 }
             }
         }
+        let t10 = precise_time_ns();
+        println!("Main loop: {} us", (t10 - t00) / 1000 );
     }
 
     // TODO: Must do counting concurrently with producing elements
+    let t000 = precise_time_ns();
     let mut same = 0;
     let mut different = 0;
     for e in elements {
@@ -43,8 +49,10 @@ fn main() {
             different += 1
         }
     }
+    let t100 = precise_time_ns();
+    println!("Counting: {} us", (t100 - t000) / 1000 );
 
-    let t1 = time::precise_time_ns();
+    let t1 = precise_time_ns();
     println!("Results - Same: {}, Different: {}", same, different);
-    println!("Time: {} ms", (t1 - t0) / 1000000 )
+    println!("Time: {} us", (t1 - t0) / 1000 )
 }
