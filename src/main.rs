@@ -24,15 +24,13 @@ fn main() {
                         elements.push(el);
                     }
                 },
-                Err(_) => {
-                }
+                Err(_) => {}
             }
         }
         let t10 = precise_time_ns();
         println!("Main loop: {} us", (t10 - t00) / 1000 );
     }
 
-    // TODO: Must do counting concurrently with producing elements
     let t000 = precise_time_ns();
     let mut same = 0;
     let mut different = 0;
