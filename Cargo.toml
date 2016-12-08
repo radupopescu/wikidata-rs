@@ -7,5 +7,5 @@ authors = ["Radu Popescu <mail@radupopescu.net>"]
 clap = "~2.19.0"
 serde = "0.8"
 serde_json = "0.8"
-flate2 = "0.2.14"
+flate2 = { version = "0.2", features = ["zlib"], default-features = false }
 time = "0.1.35"
