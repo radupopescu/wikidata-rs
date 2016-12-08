@@ -25,13 +25,13 @@ impl Streamer {
     }
 
     fn advance_to_eol(&mut self) {
-        for b in &mut self.bytes {
-            if let Ok(bite) = b {
-                if bite == 0xA {
-                    break;
-                } else {
-                    self.buffer.push(bite);
-                }
+        let itr = (&mut self.bytes).take_while(|b| match b {
+            &Ok(bb) => { bb != 0xA },
+            _ => { false },
+        });
+        for b in itr {
+            if let Ok(bb) = b {
+                self.buffer.push(bb);
             }
         }
     }
