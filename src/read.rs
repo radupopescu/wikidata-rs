@@ -1,5 +1,5 @@
 use flate2::bufread::GzDecoder;
-use time::precise_time_ns;
+//use time::precise_time_ns;
 
 use std::fs;
 use std::io;
@@ -62,7 +62,7 @@ impl Streamer {
 impl Iterator for Streamer {
     type Item = String;
     fn next(&mut self) -> Option<String> {
-        let t0 = precise_time_ns();
+        //let t0 = precise_time_ns();
         let mut ret = None;
         match self.read_to_eol() {
             Some(line) => {
@@ -72,8 +72,8 @@ impl Iterator for Streamer {
             },
             None => {},
         };
-        let t1 = precise_time_ns();
-        println!("Streamer::next: {} us", (t1 - t0) / 1000 );
+        //let t1 = precise_time_ns();
+        //println!("Streamer::next: {} us", (t1 - t0) / 1000 );
         ret
     }
 }
