@@ -8,16 +8,8 @@ use std::str;
 
 use errors::*;
 
-pub fn make_reader(input_file: &str) -> Result<GzDecoder<io::BufReader<fs::File>>,
-                                               WikiError> {
-    let f = fs::File::open(input_file)?;
-    let bf = io::BufReader::new(f);
-    let rdr = GzDecoder::new(bf)?;
-    Ok(rdr)
-}
-
 pub struct Streamer {
-    buffer: String,
+    buffer: Vec<u8>,
     bytes: io::Bytes<GzDecoder<io::BufReader<fs::File>>>,
 }
 
@@ -28,7 +20,7 @@ impl Streamer {
         let bf = io::BufReader::new(f);
         let rdr = GzDecoder::new(bf)?;
         let bytes = rdr.bytes();
-        Ok(Streamer { buffer: String::new(),
+        Ok(Streamer { buffer: Vec::new(),
                       bytes: bytes })
     }
 
@@ -38,9 +30,7 @@ impl Streamer {
                 if bite == 0xA {
                     break;
                 } else {
-                    if let Ok(bb) = str::from_utf8(&[bite]) {
-                        self.buffer.push_str(bb);
-                    }
+                    self.buffer.push(bite);
                 }
             }
         }
@@ -55,7 +45,11 @@ impl Iterator for Streamer {
         self.buffer.clear();
         self.advance_to_eol();
         let ret = if self.buffer.len() > 0 {
-            Some(self.buffer.to_owned())
+            if let Ok(s) = String::from_utf8(self.buffer.clone()) {
+                Some(s)
+            } else {
+                None
+            }
         } else {
             None
         };

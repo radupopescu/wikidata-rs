@@ -8,12 +8,6 @@ use wikidata::read::Streamer;
 use wikidata::param::{Parameters,read_params};
 
 fn main() {
-    // TODO: More fine grained time measurements on:
-    //       - file streaming
-    //       - JSON parsing
-    //       - element production loop
-    //       - element counting
-
     let t0 = precise_time_ns();
 
     let Parameters{input_file, languages} = read_params();
