@@ -18,14 +18,10 @@ fn main() {
     if let Ok(streamer) = Streamer::new(&input_file) {
         let t00 = precise_time_ns();
         for line in streamer {
-            match parse_item(&line, &languages) {
-                Ok(elem) => {
-                    if let Some(el) = elem {
-                        elements.push(el);
-                    }
-                },
-                Err(_) => {}
-            }
+            parse_item(&line, &languages)
+                .ok()
+                .and_then(|l| l) // flatten Option<Option<...> => Option<...>
+                .map(|e| {elements.push(e) });
         }
         let t10 = precise_time_ns();
         println!("Main loop: {} us", (t10 - t00) / 1000 );
