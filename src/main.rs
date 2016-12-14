@@ -20,11 +20,11 @@ fn main() {
     println!("Input file: {}", input_file);
     println!("Languages: {:?}", languages);
 
+    let pool = CpuPool::new(4);
+    let mut futs = Vec::new();
     let (tx, rx) = channel();
     if let Ok(streamer) = Streamer::new(&input_file) {
         let t00 = precise_time_ns();
-        let pool = CpuPool::new(4);
-        let mut futs = Vec::new();
         for line in streamer {
             let l = line.clone();
             let langs = languages.clone();
@@ -40,9 +40,6 @@ fn main() {
             });
             futs.push(t);
         }
-        for f in futs {
-            let _ = f.wait();
-        }
         let t10 = precise_time_ns();
         println!("Main loop: {} us", (t10 - t00) / 1000 );
     }
@@ -57,6 +54,9 @@ fn main() {
         } else {
             different += 1
         }
+    }
+    for f in futs {
+        let _ = f.wait();
     }
     let t100 = precise_time_ns();
     println!("Counting: {} us", (t100 - t000) / 1000 );
