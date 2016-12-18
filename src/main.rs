@@ -16,11 +16,12 @@ use wikidata::param::{Parameters,read_params};
 fn main() {
     let t0 = precise_time_ns();
 
-    let Parameters{input_file, languages} = read_params();
+    let Parameters{input_file, languages, threads} = read_params();
     println!("Input file: {}", input_file);
     println!("Languages: {:?}", languages);
+    println!("Number of threads: {}", threads);
 
-    let pool = CpuPool::new(4);
+    let pool = CpuPool::new(threads);
     let mut futs = Vec::new();
     let (tx, rx) = channel();
     if let Ok(streamer) = Streamer::new(&input_file) {
