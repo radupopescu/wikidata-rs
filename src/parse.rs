@@ -7,7 +7,7 @@ use errors::*;
 
 pub type WikiTitles = HashMap<String, String>;
 
-pub fn parse_item(line: &str, languages: &Vec<String>)
+pub fn parse_item(line: &str, languages: &[String])
                   -> Result<Option<WikiTitles>, WikiError> {
     //let t0 = precise_time_ns();
     let end = if line.ends_with(",\n") {
