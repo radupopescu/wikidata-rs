@@ -4,6 +4,7 @@ extern crate time;
 extern crate wikidata;
 
 use std::thread;
+use std::sync::Arc;
 use std::sync::mpsc::{channel};
 
 use futures::Future;
@@ -25,7 +26,7 @@ fn main() {
     let pool = CpuPool::new(threads);
     let (tx, rx) = channel();
     if let Ok(streamer) = Streamer::new(&input_file) {
-        let langs = languages.clone(); // clone of langs to be moved into the other thread
+        let langs = Arc::new(languages.clone()); // clone of langs to be moved into the other thread
         thread::spawn(move || {
             let tx = tx.clone();
             let t00 = precise_time_ns();
